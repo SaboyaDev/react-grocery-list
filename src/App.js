@@ -5,16 +5,24 @@ import Content from './components/content/content.component'
 import Footer from './components/footer/footer.component'
 import { useState, useEffect } from 'react'
 
-function App() {
-  // Get Local Storage List
-  const getShoppingList = localStorage.getItem('shopping-list')
+function App() { 
+  const API_URL = 'http://localhost:3500/items'
 	// State
-	const [items, setItems] = useState(JSON.parse(getShoppingList) || [])
+	const [items, setItems] = useState([])
 	const [newItem, setNewItem] = useState('')
 	const [search, setSearch] = useState('')
 
   useEffect(() => {
-    localStorage.setItem('shopping-list', JSON.stringify(items))
+    const fetchItems = async () => {
+      try {
+        const response = await fetch(API_URL);
+        const listItems = response.json()
+        console.log(listItems)
+        setItems(listItems)
+      } catch (err) {
+        console.log(err.stack);
+      }
+    }
   }, [items])
 
 	const addItem = item => {
