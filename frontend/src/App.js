@@ -6,16 +6,36 @@ import Footer from './components/footer/footer.component'
 import { useState, useEffect } from 'react'
 
 function App() {
-  // Get Local Storage List
-  const getShoppingList = localStorage.getItem('shopping-list')
-	// State
-	const [items, setItems] = useState(JSON.parse(getShoppingList) || [])
+	const API_URL = 'http://localhost:3500/items'
+
+	const [items, setItems] = useState([])
 	const [newItem, setNewItem] = useState('')
 	const [search, setSearch] = useState('')
+	const [fetchError, setFetchError] = useState(null)
+	const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    localStorage.setItem('shopping-list', JSON.stringify(items))
-  }, [items])
+	useEffect(() => {
+		const fetchItems = async () => {
+			try {
+				const response = await fetch(API_URL)
+				if (!response.ok) throw Error(`Didn't receive expected data`)
+				const listItems = await response.json()
+				console.log(listItems)
+				setItems(listItems)
+				setFetchError(null)
+			} catch (error) {
+				setFetchError(error.message)
+			} finally {
+				setIsLoading(false)
+			}
+		}
+		// (async () => await fetchItems())()
+		// since it's not returing anything we can just call it
+		// We will simulate the delay from a REST API
+		setTimeout(() => {
+			fetchItems()
+		}, 2000)
+	}, [])
 
 	const addItem = item => {
 		const id = items.length ? items[items.length - 1].id + 1 : 1
@@ -51,13 +71,19 @@ function App() {
 				search={search}
 				setSearch={setSearch}
 			/>
-			<Content
-				items={items.filter(item =>
-					item.item.toLowerCase().includes(search.toLocaleLowerCase())
+			<main>
+				{isLoading && <p>Loading Items...</p>}
+				{fetchError && <p style={{ color: 'red' }}>{`Error: ${fetchError}`}</p>}
+				{!fetchError && !isLoading && (
+					<Content
+						items={items.filter(item =>
+							item.item.toLowerCase().includes(search.toLocaleLowerCase())
+						)}
+						handleChange={handleChange}
+						handleDelete={handleDelete}
+					/>
 				)}
-				handleChange={handleChange}
-				handleDelete={handleDelete}
-			/>
+			</main>
 			<Footer length={items.length} />
 		</div>
 	)
